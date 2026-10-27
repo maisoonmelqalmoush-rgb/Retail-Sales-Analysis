@@ -252,64 +252,39 @@ if page == "Page 1: Sales Overview":
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("Sales by Sales Channel")
-        sales_channel = df.groupby(
-            "Sales_Channel", as_index=False
-        )["Sales_Amount"].sum()
+    st.subheader("Sales by Sales Channel")
+    sales_channel = (
+        df.groupby("Sales_Channel", as_index=False)["Sales_Amount"]
+        .sum()
+        .sort_values("Sales_Amount", ascending=False)
+    )
 
-        channel_colors = {
-            "Online": "#4682B4",
-            "B2B Portal": "#90EE90",
-            "Phone Order": "#ADFF2F",
-            "Retail Store": "#FF8C00"
-        }
+    channel_colors = {
+        "Online": "#4682B4",
+        "B2B Portal": "#90EE90",
+        "Phone Order": "#ADFF2F",
+        "Retail Store": "#FF8C00"
+    }
 
-        fig_channel = px.bar(
-            sales_channel,
-            x="Sales_Channel",
-            y="Sales_Amount",
-            title="Total Sales by Sales Channel",
-            color="Sales_Channel",
-            color_discrete_map=channel_colors,
-            text=sales_channel["Sales_Amount"].map(lambda x: f"{x:,.0f}")
-        ).update_layout(
-            xaxis_title="Sales Channel",
-            yaxis_title="Total Sales",
-            yaxis_tickprefix="$",
-            yaxis_tickformat=",.0f",
-            showlegend=False
-        ).update_traces(
-            textposition="outside"
-        )
-        st.plotly_chart(fig_channel, use_container_width=True)
-
-    with col2:
-        st.subheader("Sales by Region")
-        sales_region = (
-            df.groupby("Region", as_index=False)["Sales_Amount"]
-            .sum()
-            .sort_values("Sales_Amount", ascending=True)
-        )
-
-        fig_region = px.bar(
-            sales_region,
-            x="Sales_Amount",
-            y="Region",
-            orientation="h",
-            title="Total Sales by Region",
-            color_discrete_sequence=["#4682B4"],
-            text=sales_region["Sales_Amount"].map(lambda x: f"{x:,.0f}")
-        ).update_layout(
-            xaxis_title="Total Sales",
-            yaxis_title="Region",
-            xaxis_tickprefix="$",
-            xaxis_tickformat=",.0f",
-            showlegend=False
-        ).update_traces(
-            textposition="outside",
-            cliponaxis=False
-        )
-        st.plotly_chart(fig_region, use_container_width=True)
+    fig_channel = px.bar(
+        sales_channel,
+        x="Sales_Channel",
+        y="Sales_Amount",
+        title="Total Sales by Sales Channel",
+        color="Sales_Channel",
+        color_discrete_map=channel_colors,
+        text=sales_channel["Sales_Amount"].map(lambda x: f"{x:,.0f}"),
+        category_orders={"Sales_Channel": sales_channel["Sales_Channel"].tolist()}
+    ).update_layout(
+        xaxis_title="Sales Channel",
+        yaxis_title="Total Sales",
+        yaxis_tickprefix="$",
+        yaxis_tickformat=",.0f",
+        showlegend=False
+    ).update_traces(
+        textposition="outside"
+    )
+    st.plotly_chart(fig_channel, use_container_width=True)
 
     # Order Status Distribution
     st.subheader("Order Status Distribution")
@@ -337,66 +312,69 @@ elif page == "Page 2: Product and Customer Analysis":
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("Return Reasons Distribution")
-        return_counts = (
-            df[df["Return_Flag"] == "Yes"]["Return_Reason"]
-            .value_counts()
-            .reindex(
-                ["Late Delivery", "Wrong Item", "Damaged", "Other", "Defective", "Changed Mind"],
-                fill_value=0
-            )
-            .rename_axis("Return_Reason")
-            .reset_index(name="count")
+    st.subheader("Return Reasons Distribution")
+    return_counts = (
+        df[df["Return_Flag"] == "Yes"]["Return_Reason"]
+        .value_counts()
+        .reindex(
+            ["Late Delivery", "Wrong Item", "Damaged", "Other", "Defective", "Changed Mind"],
+            fill_value=0
         )
+        .rename_axis("Return_Reason")
+        .reset_index(name="count")
+        .sort_values("count", ascending=False)
+    )
 
-        fig_returns = px.bar(
-            return_counts,
-            x="Return_Reason",
-            y="count",
-            title="Return Reasons Distribution",
-            color="Return_Reason",
-            color_discrete_map=return_colors,
-            text_auto=True
-        ).update_layout(
-            xaxis_title="Return Reason",
-            yaxis_title="Number of Returns"
+    fig_returns = px.bar(
+        return_counts,
+        x="Return_Reason",
+        y="count",
+        title="Return Reasons Distribution",
+        color="Return_Reason",
+        color_discrete_map=return_colors,
+        text_auto=True,
+        category_orders={"Return_Reason": return_counts["Return_Reason"].tolist()}
+    ).update_layout(
+        xaxis_title="Return Reason",
+        yaxis_title="Number of Returns"
+    )
+    st.plotly_chart(fig_returns, use_container_width=True)
+
+with col2:
+    st.subheader("Return Rate by Product Category")
+    return_rate = (
+        df.groupby("Product_Category")
+        .agg(
+            Total_Orders=("Order_ID", "nunique"),
+            Returned_Orders=("Return_Flag", lambda x: (x == "Yes").sum())
         )
-        st.plotly_chart(fig_returns, use_container_width=True)
+        .reset_index()
+    )
+    return_rate["Return_Rate"] = (
+        return_rate["Returned_Orders"] / return_rate["Total_Orders"] * 100
+    )
+    return_rate = return_rate.sort_values("Return_Rate", ascending=False)
 
-    with col2:
-        st.subheader("Return Rate by Product Category")
-        return_rate = (
-            df.groupby("Product_Category")
-            .agg(
-                Total_Orders=("Order_ID", "nunique"),
-                Returned_Orders=("Return_Flag", lambda x: (x == "Yes").sum())
-            )
-            .reset_index()
-        )
-        return_rate["Return_Rate"] = (
-            return_rate["Returned_Orders"] / return_rate["Total_Orders"] * 100
-        )
+    fig_return_rate = px.bar(
+        return_rate,
+        x="Product_Category",
+        y="Return_Rate",
+        title="Return Rate by Product Category",
+        color="Product_Category",
+        color_discrete_map=category_colors,
+        text=return_rate["Return_Rate"].map(lambda x: f"{x:.1f}%"),
+        category_orders={"Product_Category": return_rate["Product_Category"].tolist()}
+    ).update_layout(
+        xaxis_title="Product Category",
+        yaxis_title="Return Rate (%)",
+        yaxis_ticksuffix="%",
+        showlegend=False
+    ).update_traces(
+        textposition="outside"
+    )
+    st.plotly_chart(fig_return_rate, use_container_width=True)
 
-        fig_return_rate = px.bar(
-            return_rate,
-            x="Product_Category",
-            y="Return_Rate",
-            title="Return Rate by Product Category",
-            color="Product_Category",
-            color_discrete_map=category_colors,
-            text=return_rate["Return_Rate"].map(lambda x: f"{x:.1f}%")
-        ).update_layout(
-            xaxis_title="Product Category",
-            yaxis_title="Return Rate (%)",
-            yaxis_ticksuffix="%",
-            showlegend=False
-        ).update_traces(
-            textposition="outside"
-        )
-        st.plotly_chart(fig_return_rate, use_container_width=True)
-
-    col1, col2 = st.columns(2)
-
+col1, col2 = st.columns(2)
     with col1:
         st.subheader("Delivery Time by Shipping Method")
         fig_delivery = px.box(
