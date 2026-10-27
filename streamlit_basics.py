@@ -17,7 +17,7 @@ st.markdown(
 )
 col_left, col_center, col_right = st.columns([1, 6, 1])
 with col_center:
-    st.image(r'C:\Users\Maison\OneDrive\Desktop\Retail Img.jpg', use_container_width=True)
+    st.image("Retail Img.jpg", use_container_width=True)
 
 # cleaned dataset
 df = pd.read_csv("cleaned_retail_dataset.csv")
