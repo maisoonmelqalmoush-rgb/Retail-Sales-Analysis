@@ -1,9 +1,9 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-
+ 
 st.set_page_config(page_title="Retail Sales Analysis", layout="wide")
-
+ 
 st.markdown(
     """
     <h1 style='text-align: center; color: #4682B4;'>
@@ -18,29 +18,29 @@ st.markdown(
 col_left, col_center, col_right = st.columns([1, 6, 1])
 with col_center:
     st.image("Retail Img.jpg", use_container_width=True)
-
+ 
 # cleaned dataset
 df = pd.read_csv("cleaned_retail_dataset.csv")
-
+ 
 # Prepare dates for the monthly sales chart
 df["Order_Date"] = pd.to_datetime(df["Order_Date"], errors="coerce")
-
+ 
 page = st.sidebar.radio(
     "Pages",
     ["Page 1: Sales Overview", "Page 2: Product and Customer Analysis"],
     key="page_navigation",
 )
-
+ 
 st.sidebar.divider()
 st.sidebar.subheader("Filters")
 st.sidebar.caption("Choose one or more values")
-
+ 
 year_options = sorted(df["Order_Year"].dropna().astype(int).unique().tolist())
 region_options = sorted(df["Region"].dropna().astype(str).unique().tolist())
 category_options = sorted(df["Product_Category"].dropna().astype(str).unique().tolist())
 channel_options = sorted(df["Sales_Channel"].dropna().astype(str).unique().tolist())
 payment_options = sorted(df["Payment_Method"].dropna().astype(str).unique().tolist())
-
+ 
 selected_years = st.sidebar.multiselect(
     "Order Year", options=year_options, default=[], key="filter_year"
 )
@@ -58,38 +58,38 @@ selected_payment_methods = st.sidebar.multiselect(
 )
 # Apply selected filters to the dataset
 filtered_df = df.copy()
-
+ 
 if selected_years:
     filtered_df = filtered_df[
         filtered_df["Order_Year"].isin(selected_years)
     ]
-
+ 
 if selected_regions:
     filtered_df = filtered_df[
         filtered_df["Region"].astype(str).isin(selected_regions)
     ]
-
+ 
 if selected_categories:
     filtered_df = filtered_df[
         filtered_df["Product_Category"].astype(str).isin(selected_categories)
     ]
-
+ 
 if selected_channels:
     filtered_df = filtered_df[
         filtered_df["Sales_Channel"].astype(str).isin(selected_channels)
     ]
-
+ 
 if selected_payment_methods:
     filtered_df = filtered_df[
         filtered_df["Payment_Method"].astype(str).isin(selected_payment_methods)
     ]
-
+ 
 st.sidebar.caption(
     f"Rows matching filters: {len(filtered_df):,} of {len(df):,}"
 )
 full_df = df          # keep the original if you ever need it
 df = filtered_df      # everything below now uses filtered data
-
+ 
 # Colours used
 category_colors = {
     "Appliances": "#90EE90",
@@ -97,7 +97,7 @@ category_colors = {
     "Furniture": "#FFA500",
     "Office Supplies": "#FF69B4"
 }
-
+ 
 status_colors = {
     "Completed": "#2E8B57",
     "Shipped": "#4682B4",
@@ -105,7 +105,7 @@ status_colors = {
     "Processing": "#9370DB",
     "Cancelled": "#DC143C"
 }
-
+ 
 return_colors = {
     "Late Delivery": "#990000",
     "Wrong Item": "#D92D2D",
@@ -114,14 +114,14 @@ return_colors = {
     "Defective": "#FFAAAA",
     "Changed Mind": "#FFCACA"
 }
-
+ 
 shipping_colors = {
     "Standard": "#2E8B57",
     "Next Day": "#4682B4",
     "Express": "#FFA500",
     "Pickup": "#9370DB"
 }
-
+ 
 rating_colors = {
     1: "#D73027",
     2: "#F46D43",
@@ -129,26 +129,26 @@ rating_colors = {
     4: "#A6D96A",
     5: "#1A9850"
 }
-
-
+ 
+ 
 # -------------------------
 # PAGE 1: SALES OVERVIEW
 # -------------------------
 if page == "Page 1: Sales Overview":
     st.header("Sales Overview")
-
+ 
     total_sales = df["Sales_Amount"].sum()
     total_profit = df["Profit"].sum()
     total_orders = df["Order_ID"].nunique()
     average_order_value = total_sales / total_orders if total_orders else 0
-
+ 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Sales", f"${total_sales:,.0f}")
     col2.metric("Total Profit", f"${total_profit:,.0f}")
     col3.metric("Unique Orders", f"{total_orders:,}")
     col4.metric("Average Order Value", f"${average_order_value:,.2f}")
     st.dataframe(df)
-
+ 
     # Orders by Year
     st.subheader("Orders by Year")
     orders_by_year = df["Order_Year"].value_counts().reset_index()
@@ -161,35 +161,35 @@ if page == "Page 1: Sales Overview":
     )
     fig_year.update_xaxes(dtick=1, tickmode="linear")
     st.plotly_chart(fig_year, use_container_width=True)
-
-   # Monthly Sales Trend
+ 
+    # Monthly Sales Trend
     st.subheader("Monthly Sales Trend")
-
+ 
     # Create a copy so the original dataset remains unchanged
     monthly_df = df.copy()
-
+ 
     # Convert Order_Date to datetime format
     monthly_df["Order_Date"] = pd.to_datetime(
         monthly_df["Order_Date"],
         errors="coerce"
     )
-
+ 
     # Remove rows with invalid dates for this chart
     monthly_df = monthly_df.dropna(subset=["Order_Date"])
-
+ 
     # Group sales by month
     monthly_df["Month"] = monthly_df["Order_Date"].dt.to_period("M")
-
+ 
     monthly_sales = (
         monthly_df.groupby("Month", as_index=False)["Sales_Amount"]
         .sum()
     )
-
+ 
     # Convert monthly periods back to dates
     monthly_sales["Order_Date"] = (
         monthly_sales["Month"].dt.to_timestamp()
     )
-
+ 
     # Chart
     fig_monthly = px.line(
         monthly_sales,
@@ -202,18 +202,18 @@ if page == "Page 1: Sales Overview":
     ).update_xaxes(
         range=["2022-01-01", "2025-12-31"]
     )
-
+ 
     # Display
     st.plotly_chart(fig_monthly, width="stretch")
-
+ 
     col1, col2 = st.columns(2)
-
+ 
     with col1:
         st.subheader("Sales by Product Category")
         category_sales = df.groupby(
             "Product_Category", as_index=False
         )["Sales_Amount"].sum()
-
+ 
         fig_category_sales = px.bar(
             category_sales,
             x="Sales_Amount",
@@ -226,13 +226,13 @@ if page == "Page 1: Sales Overview":
             yaxis={"categoryorder": "total ascending"}
         )
         st.plotly_chart(fig_category_sales, use_container_width=True)
-
+ 
     with col2:
         st.subheader("Profit by Product Category")
         category_profit = df.groupby(
             "Product_Category", as_index=False
         )["Profit"].sum()
-
+ 
         fig_category_profit = px.bar(
             category_profit,
             x="Profit",
@@ -248,44 +248,72 @@ if page == "Page 1: Sales Overview":
             yaxis_title="Product Category"
         )
         st.plotly_chart(fig_category_profit, use_container_width=True)
-
+ 
     col1, col2 = st.columns(2)
-
+ 
     with col1:
-    st.subheader("Sales by Sales Channel")
-    sales_channel = (
-        df.groupby("Sales_Channel", as_index=False)["Sales_Amount"]
-        .sum()
-        .sort_values("Sales_Amount", ascending=False)
-    )
-
-    channel_colors = {
-        "Online": "#4682B4",
-        "B2B Portal": "#90EE90",
-        "Phone Order": "#ADFF2F",
-        "Retail Store": "#FF8C00"
-    }
-
-    fig_channel = px.bar(
-        sales_channel,
-        x="Sales_Channel",
-        y="Sales_Amount",
-        title="Total Sales by Sales Channel",
-        color="Sales_Channel",
-        color_discrete_map=channel_colors,
-        text=sales_channel["Sales_Amount"].map(lambda x: f"{x:,.0f}"),
-        category_orders={"Sales_Channel": sales_channel["Sales_Channel"].tolist()}
-    ).update_layout(
-        xaxis_title="Sales Channel",
-        yaxis_title="Total Sales",
-        yaxis_tickprefix="$",
-        yaxis_tickformat=",.0f",
-        showlegend=False
-    ).update_traces(
-        textposition="outside"
-    )
-    st.plotly_chart(fig_channel, use_container_width=True)
-
+        st.subheader("Sales by Sales Channel")
+        sales_channel = (
+            df.groupby("Sales_Channel", as_index=False)["Sales_Amount"]
+            .sum()
+            .sort_values("Sales_Amount", ascending=False)
+        )
+ 
+        channel_colors = {
+            "Online": "#4682B4",
+            "B2B Portal": "#90EE90",
+            "Phone Order": "#ADFF2F",
+            "Retail Store": "#FF8C00"
+        }
+ 
+        fig_channel = px.bar(
+            sales_channel,
+            x="Sales_Channel",
+            y="Sales_Amount",
+            title="Total Sales by Sales Channel",
+            color="Sales_Channel",
+            color_discrete_map=channel_colors,
+            text=sales_channel["Sales_Amount"].map(lambda x: f"{x:,.0f}"),
+            category_orders={"Sales_Channel": sales_channel["Sales_Channel"].tolist()}
+        ).update_layout(
+            xaxis_title="Sales Channel",
+            yaxis_title="Total Sales",
+            yaxis_tickprefix="$",
+            yaxis_tickformat=",.0f",
+            showlegend=False
+        ).update_traces(
+            textposition="outside"
+        )
+        st.plotly_chart(fig_channel, use_container_width=True)
+ 
+    with col2:
+        st.subheader("Sales by Region")
+        sales_region = (
+            df.groupby("Region", as_index=False)["Sales_Amount"]
+            .sum()
+            .sort_values("Sales_Amount", ascending=True)
+        )
+ 
+        fig_region = px.bar(
+            sales_region,
+            x="Sales_Amount",
+            y="Region",
+            orientation="h",
+            title="Total Sales by Region",
+            color_discrete_sequence=["#4682B4"],
+            text=sales_region["Sales_Amount"].map(lambda x: f"{x:,.0f}")
+        ).update_layout(
+            xaxis_title="Total Sales",
+            yaxis_title="Region",
+            xaxis_tickprefix="$",
+            xaxis_tickformat=",.0f",
+            showlegend=False
+        ).update_traces(
+            textposition="outside",
+            cliponaxis=False
+        )
+        st.plotly_chart(fig_region, use_container_width=True)
+ 
     # Order Status Distribution
     st.subheader("Order Status Distribution")
     status_counts = df["Order_Status"].value_counts().reset_index()
@@ -302,94 +330,104 @@ if page == "Page 1: Sales Overview":
         yaxis_title="Number of Orders"
     )
     st.plotly_chart(fig_status, use_container_width=True)
-
+ 
 # -------------------------
 # PAGE 2: PRODUCT AND CUSTOMER ANALYSIS
 # -------------------------
 elif page == "Page 2: Product and Customer Analysis":
     st.header("Product and Customer Analysis")
-
+ 
     col1, col2 = st.columns(2)
-
+ 
     with col1:
-    st.subheader("Return Reasons Distribution")
-    return_counts = (
-        df[df["Return_Flag"] == "Yes"]["Return_Reason"]
-        .value_counts()
-        .reindex(
-            ["Late Delivery", "Wrong Item", "Damaged", "Other", "Defective", "Changed Mind"],
-            fill_value=0
+        st.subheader("Return Reasons Distribution")
+        return_counts = (
+            df[df["Return_Flag"] == "Yes"]["Return_Reason"]
+            .value_counts()
+            .reindex(
+                ["Late Delivery", "Wrong Item", "Damaged", "Other", "Defective", "Changed Mind"],
+                fill_value=0
+            )
+            .rename_axis("Return_Reason")
+            .reset_index(name="count")
+            .sort_values("count", ascending=False)
         )
-        .rename_axis("Return_Reason")
-        .reset_index(name="count")
-        .sort_values("count", ascending=False)
-    )
-
-    fig_returns = px.bar(
-        return_counts,
-        x="Return_Reason",
-        y="count",
-        title="Return Reasons Distribution",
-        color="Return_Reason",
-        color_discrete_map=return_colors,
-        text_auto=True,
-        category_orders={"Return_Reason": return_counts["Return_Reason"].tolist()}
-    ).update_layout(
-        xaxis_title="Return Reason",
-        yaxis_title="Number of Returns"
-    )
-    st.plotly_chart(fig_returns, use_container_width=True)
-
-with col2:
-    st.subheader("Return Rate by Product Category")
-    return_rate = (
-        df.groupby("Product_Category")
-        .agg(
-            Total_Orders=("Order_ID", "nunique"),
-            Returned_Orders=("Return_Flag", lambda x: (x == "Yes").sum())
+ 
+        fig_returns = px.bar(
+            return_counts,
+            x="Return_Reason",
+            y="count",
+            title="Return Reasons Distribution",
+            color="Return_Reason",
+            color_discrete_map=return_colors,
+            text_auto=True,
+            category_orders={"Return_Reason": return_counts["Return_Reason"].tolist()}
+        ).update_layout(
+            xaxis_title="Return Reason",
+            yaxis_title="Number of Returns"
         )
-        .reset_index()
-    )
-    return_rate["Return_Rate"] = (
-        return_rate["Returned_Orders"] / return_rate["Total_Orders"] * 100
-    )
-    return_rate = return_rate.sort_values("Return_Rate", ascending=False)
-
-    fig_return_rate = px.bar(
-        return_rate,
-        x="Product_Category",
-        y="Return_Rate",
-        title="Return Rate by Product Category",
-        color="Product_Category",
-        color_discrete_map=category_colors,
-        text=return_rate["Return_Rate"].map(lambda x: f"{x:.1f}%"),
-        category_orders={"Product_Category": return_rate["Product_Category"].tolist()}
-    ).update_layout(
-        xaxis_title="Product Category",
-        yaxis_title="Return Rate (%)",
-        yaxis_ticksuffix="%",
-        showlegend=False
-    ).update_traces(
-        textposition="outside"
-    )
-    st.plotly_chart(fig_return_rate, use_container_width=True)
-
-col1, col2 = st.columns(2)
+        st.plotly_chart(fig_returns, use_container_width=True)
+ 
+    with col2:
+        st.subheader("Return Rate by Product Category")
+        return_rate = (
+            df.groupby("Product_Category")
+            .agg(
+                Total_Orders=("Order_ID", "nunique"),
+                Returned_Orders=("Return_Flag", lambda x: (x == "Yes").sum())
+            )
+            .reset_index()
+        )
+        return_rate["Return_Rate"] = (
+            return_rate["Returned_Orders"] / return_rate["Total_Orders"] * 100
+        )
+        return_rate = return_rate.sort_values("Return_Rate", ascending=False)
+ 
+        fig_return_rate = px.bar(
+            return_rate,
+            x="Product_Category",
+            y="Return_Rate",
+            title="Return Rate by Product Category",
+            color="Product_Category",
+            color_discrete_map=category_colors,
+            text=return_rate["Return_Rate"].map(lambda x: f"{x:.1f}%"),
+            category_orders={"Product_Category": return_rate["Product_Category"].tolist()}
+        ).update_layout(
+            xaxis_title="Product Category",
+            yaxis_title="Return Rate (%)",
+            yaxis_ticksuffix="%",
+            showlegend=False
+        ).update_traces(
+            textposition="outside"
+        )
+        st.plotly_chart(fig_return_rate, use_container_width=True)
+ 
+    col1, col2 = st.columns(2)
+ 
     with col1:
         st.subheader("Delivery Time by Shipping Method")
+        delivery_df = df.dropna(subset=["Delivery_Days"])
+        delivery_order = (
+            delivery_df.groupby("Shipping_Method")["Delivery_Days"]
+            .mean()
+            .sort_values(ascending=False)
+            .index.tolist()
+        )
+ 
         fig_delivery = px.box(
-            df.dropna(subset=["Delivery_Days"]),
+            delivery_df,
             x="Shipping_Method",
             y="Delivery_Days",
             color="Shipping_Method",
             color_discrete_map=shipping_colors,
-            title="Delivery Time by Shipping Method"
+            title="Delivery Time by Shipping Method",
+            category_orders={"Shipping_Method": delivery_order}
         ).update_layout(
             xaxis_title="Shipping Method",
             yaxis_title="Delivery Days"
         )
         st.plotly_chart(fig_delivery, use_container_width=True)
-
+ 
     with col2:
         st.subheader("Customer Rating Breakdown")
         rating_counts = (
@@ -398,7 +436,7 @@ col1, col2 = st.columns(2)
             .sort_index()
             .reset_index()
         )
-
+ 
         fig_ratings = px.pie(
             rating_counts,
             names="Customer_Rating",
@@ -409,7 +447,7 @@ col1, col2 = st.columns(2)
             color_discrete_map=rating_colors
         )
         st.plotly_chart(fig_ratings, use_container_width=True)
-
+ 
     st.subheader("Profit Margin by Product Category")
     profit_margin = (
         df.groupby("Product_Category", as_index=False)
@@ -422,7 +460,7 @@ col1, col2 = st.columns(2)
         profit_margin["Total_Profit"] / profit_margin["Total_Sales"] * 100
     )
     profit_margin = profit_margin.sort_values("Profit_Margin", ascending=False)
-
+ 
     fig_margin = px.bar(
         profit_margin,
         x="Product_Category",
