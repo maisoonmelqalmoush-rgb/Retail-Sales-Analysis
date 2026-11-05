@@ -414,7 +414,7 @@ elif page == "Page 2: Product and Customer Analysis":
  
     col1, col2 = st.columns(2)
  
-   with col1:
+    with col1:
     st.subheader("Orders by Shipping Method")
     shipping_counts = (
         df["Shipping_Method"]
