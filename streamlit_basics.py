@@ -438,25 +438,25 @@ elif page == "Page 2: Product and Customer Analysis":
     with col2:
         st.subheader("Customer Rating Breakdown")
         rating_counts = (
-        df["Customer_Rating"].fillna(0).astype(int)
-        .map(rating_labels)
-        .value_counts()
-        .reindex(list(rating_labels.values()))
-        .reset_index()
-    )
-    rating_counts.columns = ["Customer_Rating", "count"]
+            df["Customer_Rating"].fillna(0).astype(int)
+            .map(rating_labels)
+            .value_counts()
+            .reindex(list(rating_labels.values()))
+            .reset_index()
+        )
+        rating_counts.columns = ["Customer_Rating", "count"]
 
-    fig_ratings = px.pie(
-        rating_counts,
-        names="Customer_Rating",
-        values="count",
-        title="Customer Rating Breakdown",
-        hole=0.5,
-        color="Customer_Rating",
-        color_discrete_map=rating_colors
-    ).update_traces(sort=False)
+        fig_ratings = px.pie(
+            rating_counts,
+            names="Customer_Rating",
+            values="count",
+            title="Customer Rating Breakdown",
+            hole=0.5,
+            color="Customer_Rating",
+            color_discrete_map=rating_colors
+        ).update_traces(sort=False)
 
-    st.plotly_chart(fig_ratings, use_container_width=True)
+        st.plotly_chart(fig_ratings, use_container_width=True)
  
     st.subheader("Profit Margin by Product Category")
     profit_margin = (
