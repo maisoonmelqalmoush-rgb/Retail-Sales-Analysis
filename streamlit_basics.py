@@ -435,9 +435,9 @@ elif page == "Page 2: Product and Customer Analysis":
 
         st.plotly_chart(fig_delivery, use_container_width=True)
      
- with col2:
-    st.subheader("Customer Rating Breakdown")
-    rating_counts = (
+    with col2:
+        st.subheader("Customer Rating Breakdown")
+        rating_counts = (
         df["Customer_Rating"].fillna(0).astype(int)
         .map(rating_labels)
         .value_counts()
