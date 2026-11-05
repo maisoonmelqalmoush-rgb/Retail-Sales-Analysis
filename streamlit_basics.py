@@ -450,7 +450,7 @@ elif page == "Page 2: Product and Customer Analysis":
         rating_counts,
         names="Customer_Rating",
         values="count",
-        title="Customer Rating Breakdown (0 = No Rating)",
+        title="Customer Rating Breakdown",
         hole=0.5,
         color="Customer_Rating",
         color_discrete_map=rating_colors
