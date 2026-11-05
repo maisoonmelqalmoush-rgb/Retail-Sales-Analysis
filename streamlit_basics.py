@@ -407,23 +407,23 @@ elif page == "Page 2: Product and Customer Analysis":
     with col1:
         st.subheader("Delivery Time by Shipping Method")
         shipping_counts = (
-        df["Shipping_Method"]
-        .value_counts()
-        .reset_index()
-    )
-    shipping_counts.columns = ["Shipping_Method", "count"]
+            df["Shipping_Method"]
+            .value_counts()
+            .reset_index()
+        )
+        shipping_counts.columns = ["Shipping_Method", "count"]
 
-    fig_delivery = px.pie(
-        shipping_counts,
-        names="Shipping_Method",
-        values="count",
-        color="Shipping_Method",
-        color_discrete_map=shipping_colors,
-        title="Orders by Shipping Method",
-        hole=0.5
-    ).update_traces(textinfo="percent+label")
+        fig_delivery = px.pie(
+            shipping_counts,
+            names="Shipping_Method",
+            values="count",
+            color="Shipping_Method",
+            color_discrete_map=shipping_colors,
+            title="Orders by Shipping Method",
+            hole=0.5
+        ).update_traces(textinfo="percent+label")
 
-    st.plotly_chart(fig_delivery, use_container_width=True)
+        st.plotly_chart(fig_delivery, use_container_width=True)
  
     with col2:
         st.subheader("Customer Rating Breakdown")
