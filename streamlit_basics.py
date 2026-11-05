@@ -1,3 +1,4 @@
+%%writefile streamlit_basics.py
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -122,12 +123,22 @@ shipping_colors = {
     "Pickup": "#9370DB"
 }
  
+rating_labels = {
+    0: "0 - No Rating",
+    1: "1 - Very Poor",
+    2: "2 - Poor",
+    3: "3 - Average",
+    4: "4 - Good",
+    5: "5 - Excellent"
+}
+
 rating_colors = {
-    1: "#D73027",
-    2: "#F46D43",
-    3: "#FDAE61",
-    4: "#A6D96A",
-    5: "#1A9850"
+    "0 - No Rating": "#BDBDBD",
+    "1 - Very Poor": "#D73027",
+    "2 - Poor": "#F46D43",
+    "3 - Average": "#FDAE61",
+    "4 - Good": "#A6D96A",
+    "5 - Excellent": "#1A9850"
 }
  
  
@@ -404,49 +415,67 @@ elif page == "Page 2: Product and Customer Analysis":
  
     col1, col2 = st.columns(2)
  
-    with col1:
-        st.subheader("Delivery Time by Shipping Method")
-        delivery_df = df.dropna(subset=["Delivery_Days"])
-        delivery_order = (
-            delivery_df.groupby("Shipping_Method")["Delivery_Days"]
-            .mean()
-            .sort_values(ascending=False)
-            .index.tolist()
-        )
+   with col1:
+    st.subheader("Orders by Shipping Method")
+    shipping_counts = (
+        df["Shipping_Method"]
+        .value_counts()
+        .reset_index()
+    )
+    shipping_counts.columns = ["Shipping_Method", "count"]
+
+    fig_delivery = px.pie(
+        shipping_counts,
+        names="Shipping_Method",
+        values="count",
+        color="Shipping_Method",
+        color_discrete_map=shipping_colors,
+        title="Orders by Shipping Method",
+        hole=0.5
+    ).update_traces(textinfo="percent+label")
+
+    st.plotly_chart(fig_delivery, use_container_width=True)
  
-        fig_delivery = px.box(
-            delivery_df,
-            x="Shipping_Method",
-            y="Delivery_Days",
-            color="Shipping_Method",
-            color_discrete_map=shipping_colors,
-            title="Delivery Time by Shipping Method",
-            category_orders={"Shipping_Method": delivery_order}
-        ).update_layout(
-            xaxis_title="Shipping Method",
-            yaxis_title="Delivery Days"
-        )
-        st.plotly_chart(fig_delivery, use_container_width=True)
- 
-    with col2:
-        st.subheader("Customer Rating Breakdown")
-        rating_counts = (
-            df.dropna(subset=["Customer_Rating"])["Customer_Rating"]
-            .value_counts()
-            .sort_index()
-            .reset_index()
-        )
- 
-        fig_ratings = px.pie(
-            rating_counts,
-            names="Customer_Rating",
-            values="count",
-            title="Customer Rating Breakdown",
-            hole=0.5,
-            color="Customer_Rating",
-            color_discrete_map=rating_colors
-        )
-        st.plotly_chart(fig_ratings, use_container_width=True)
+   rating_labels = {
+    0: '0 - No Rating',
+    1: '1 - Very Poor',
+    2: '2 - Poor',
+    3: '3 - Average',
+    4: '4 - Good',
+    5: '5 - Excellent'
+}
+
+rating_colors = {
+    '0 - No Rating': '#BDBDBD',
+    '1 - Very Poor': '#D73027',
+    '2 - Poor': '#F46D43',
+    '3 - Average': '#FDAE61',
+    '4 - Good': '#A6D96A',
+    '5 - Excellent': '#1A9850'
+}
+
+with col2:
+    st.subheader("Customer Rating Breakdown")
+    rating_counts = (
+        df["Customer_Rating"].fillna(0).astype(int)
+        .map(rating_labels)
+        .value_counts()
+        .reindex(list(rating_labels.values()))
+        .reset_index()
+    )
+    rating_counts.columns = ["Customer_Rating", "count"]
+
+    fig_ratings = px.pie(
+        rating_counts,
+        names="Customer_Rating",
+        values="count",
+        title="Customer Rating Breakdown (0 = No Rating)",
+        hole=0.5,
+        color="Customer_Rating",
+        color_discrete_map=rating_colors
+    ).update_traces(sort=False)
+
+    st.plotly_chart(fig_ratings, use_container_width=True)
  
     st.subheader("Profit Margin by Product Category")
     profit_margin = (
